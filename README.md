@@ -102,3 +102,4 @@ $ docker run -e AWS_REGION=eu-central-1 -p 8000:8000 langchain-agent
 
 Projekt rozwijany jako agent biznesowy do automatyzacji decyzyjnej zleceń dla MotoAssist i Marcel.
 Maintainer: [Twoje Imię lub Firma]
+"# langchain" 
