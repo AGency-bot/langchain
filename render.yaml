@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: langchain-agent
+    env: python
+    region: frankfurt
+    buildCommand: "pip install --no-cache-dir -r requirements.txt"
+    startCommand: "uvicorn app.api.main:app --host 0.0.0.0 --port 8000"
+    runtime: docker
+    dockerContext: .
+    dockerfilePath: Dockerfile
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_REGION
+        value: eu-central-1
+      - key: DEBUGGER_ENDPOINT
+        sync: false
+      - key: GMAIL_ADDRESS
+        sync: false
+      - key: GMAIL_PASSWORD
+        sync: false
+      - key: GMAIL_RECEIVER
+        sync: false
+      - key: PROMPT_PATH
+        value: agent.prompt.txt
+      - key: S3_BUCKET_NAME
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_WHATSAPP_FROM
+        sync: false
+      - key: TWILIO_WHATSAPP_TO
+        sync: false

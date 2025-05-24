@@ -1,0 +1,50 @@
+
+# Lokalne sekrety i pliki środowiskowe
+.env
+*.lock.txt
+*.zip
+
+# Pamięć podręczna Pythona
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pamięć narzędzi
+.ruff_cache/
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pytype/
+.hypothesis/
+
+# Środowiska
+.venv/
+venv/
+env/
+ENV/
+
+# Pliki danych lokalnych (jeśli nie w repozytorium)
+data/*.xlsx
+data/*.json
+
+# Build i dist
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+wheels/
+share/python-wheels/
+*.manifest
+*.spec
+
+# Jupyter, PyCharm, VSCode
+.ipynb_checkpoints
+.idea/
+.vscode/
+
+# Logs
+*.log
+*.coverage
+coverage.xml
+htmlcov/

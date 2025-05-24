@@ -1,0 +1,35 @@
+# Ignoruj katalogi systemowe i edytorów
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.DS_Store
+.env
+.env.*
+
+# Ignoruj lokalne pliki i dane
+secrets_local.json
+*.log
+errors.log
+
+# Ignoruj dane użytkownika i modele tymczasowe
+outputs/
+data/
+cache/
+
+# Ignoruj kontrolę zależności IDE i systemowych
+.idea/
+.vscode/
+*.egg-info/
+*.egg
+
+# Ignoruj zależności lokalne
+venv/
+.envrc
+
+# Ignoruj pliki z testów lub eksperymentów
+notebooks/
+tests/
+
+# Ignoruj konfigurację renderową (jeśli nie potrzebna wewnątrz obrazu)
+render.yaml

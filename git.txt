@@ -1,0 +1,11 @@
+# 1. Sprawdź, co się zmieniło
+git status
+
+# 2. Dodaj wszystkie zmodyfikowane pliki do commita
+git add .
+
+# 3. Zrób commit z opisem
+git commit -m "Pełna refaktoryzacja: aktualizacja narzędzi, testów, environ i CI"
+
+# 4. Wyślij na GitHub (zakładając, że pracujesz na branchu main)
+git push origin main
