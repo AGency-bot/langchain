@@ -99,7 +99,7 @@ async def integration_check():
         )
 
 # ------------------------------------------------
-# 5) AI-assisted error explanation helper (updated)
+# 5) AI-assisted error explanation helper
 # ------------------------------------------------
 async def explain_error_with_ai(error_text: str) -> str:
     try:
@@ -160,11 +160,22 @@ async def whatsapp_webhook(
     body: str = Form(..., alias="Body"),
     from_number: str = Form(..., alias="From"),
 ):
+    """
+    Odbiera wiadomości WhatsApp od Twilio i uruchamia agenta na komendzie "praca start".
+    """
     resp = MessagingResponse()
     cmd = body.strip().lower()
     if cmd == "praca start":
-        agent_state.start()
-        resp.message("✅ Agent uruchomiony.")
+        # Uruchomienie agenta
+        try:
+            invocation = agent_executor.invoke({"input": "Rozpocznij analizę i obsługę zleceń"})
+            if isinstance(invocation, dict):
+                output = invocation.get("output") or invocation.get("result") or str(invocation)
+            else:
+                output = str(invocation)
+        except Exception as e:
+            output = f"❌ Błąd agenta: {e}"
+        resp.message(output)
     elif cmd == "praca stop":
         agent_state.stop()
         resp.message("⏸️ Agent zatrzymany.")
