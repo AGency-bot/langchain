@@ -1,29 +1,34 @@
-# 🐍 Wybierz lekkie środowisko z Pythona 3.12
+# Dockerfile for langchain-agent
+
+# 🐍 Use a lightweight Python 3.12 image
 FROM python:3.12-slim
 
-# 🛠️ Ustaw katalog roboczy
+# 🛠️ Set working directory
 WORKDIR /app
 
-# 📦 Skopiuj pliki aplikacji i zależności
-COPY requirements.txt requirements.lock.txt ./
-COPY . .
+# 🔖 Copy dependency files separately to leverage Docker cache
+COPY requirements.lock.txt requirements.txt ./
 
-# 🌍 Zainstaluj zależności systemowe
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    gcc \
-    libpq-dev \
-    curl \
-    git \
+# 🌍 Install system dependencies
+RUN apt-get update \
+    && apt-get install -y \
+        build-essential \
+        gcc \
+        libpq-dev \
+        curl \
+        git \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# 📦 Zainstaluj zależności Pythona z requirements.txt (lock jako kontrola)
-RUN pip install --no-cache-dir --upgrade pip \
- && pip install --no-cache-dir -r requirements.txt \
- && pip check
+# 📦 Upgrade pip and install Python dependencies from lock file
+RUN pip install --upgrade pip \
+    && pip install --no-cache-dir --require-hashes -r requirements.lock.txt
 
-# 🌐 Port dla Render/FastAPI
+# 🗄️ Copy the rest of the application code
+COPY . .
+
+# 🌐 Expose port for FastAPI
 EXPOSE 8000
 
-# ▶️ Uruchom aplikację FastAPI przez Uvicorn
+# ▶️ Start the application with Uvicorn
 CMD ["uvicorn", "app.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

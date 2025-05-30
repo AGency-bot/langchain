@@ -1,104 +1,90 @@
-import os
-import time
+# app/modules/fetch_tool.py
+
 import logging
-import requests
-
+from typing import Optional, Dict, Any
 from pydantic import BaseModel
-from langchain_core.tools import StructuredTool
+from langchain.tools import StructuredTool
 
+from app.utils.fetch_api_client import FetchAPIClient
 from app.modules.fetch_status_tool import check_fetch_status, FetchStatusInput
 from app.modules.fetch_restart_tool import restart_fetch, FetchRestartInput
 from app.utils.error_reporter import report_error
 
-# Konfiguracja loggera
 logger = logging.getLogger(__name__)
-
-# Bazowy URL do usługi Fetch
-_default_url = "https://fetch-2-0-service.onrender.com"
-_FETCH_BASE_URL = os.getenv("FETCH_BASE_URL")
-if not _FETCH_BASE_URL:
-    logger.warning("FETCH_BASE_URL nie ustawione, używam domyślnego: %s", _default_url)
-FETCH_BASE_URL = _FETCH_BASE_URL or _default_url
+logger.setLevel(logging.INFO)
 
 class EmptyInput(BaseModel):
-    """
-    Brak argumentów wejściowych dla narzędzia Fetch.
-    """
+    """Brak argumentów wejściowych."""
     pass
 
 class FetchResponse(BaseModel):
     success: bool
     message: str
-    source: str  # 'status', 'restart', 'start', 'exception'
+    source: str  # "status", "restart", "start", "exception"
 
-
-def _start_fetch(tool_input: EmptyInput) -> str:
+def _start_fetch(tool_input: Optional[EmptyInput] = None) -> Dict[str, Any]:
     """
-    Zarządza uruchomieniem usługi Fetch:
-    - sprawdza status
-    - restartuje, jeśli jest offline lub uszkodzony
-    - wywołuje endpoint /start
+    Uruchamia Fetch:
+    - sprawdza status,
+    - restartuje jeśli usługa nie działa,
+    - czeka na “running” po restarcie,
+    - retryuje /start,
+    - zwraca dict z kluczami: success, message, source.
     """
     try:
-        # Sprawdzenie statusu Fetch
+        client = FetchAPIClient()
+
+        # 1. Sprawdzenie statusu
         status = check_fetch_status.run(tool_input=FetchStatusInput())
         logger.info("Status Fetch: %s", status)
 
-        # Restart, jeśli nie działa
-        if not status or any(k in status.lower() for k in ("błąd", "offline")):
+        # 2. Restart w razie potrzeby
+        if not status or status.startswith("❌"):
             logger.warning("Fetch nie działa – próbuję restart...")
-            restart_resp = restart_fetch.run(tool_input=FetchRestartInput()) or ""
+            restart_resp = restart_fetch.run(tool_input=FetchRestartInput())
             logger.info("Wynik restartu: %s", restart_resp)
-
             if not restart_resp.startswith("✅"):
-                return FetchResponse(
-                    success=False,
-                    message=restart_resp,
-                    source="restart"
-                ).json()
+                return FetchResponse(success=False, message=restart_resp, source="restart").dict()
 
-            # Oczekiwanie na powrót online
-            for attempt in range(5):
-                time.sleep(2)
-                check = check_fetch_status.run(tool_input=FetchStatusInput())
-                logger.info("Próba %d: %s", attempt + 1, check)
-                if check and "online" in check.lower():
+            # Dłuższe oczekiwanie na cold-start
+            for i in range(10):
+                status_after = check_fetch_status.run(tool_input=FetchStatusInput())
+                logger.info("Sprawdzam status po restarcie (%d/10): %s", i+1, status_after)
+                if status_after.startswith("✅"):
                     break
-            else:
+
+        # 3. Retry wywołania /start
+        for attempt in range(3):
+            logger.info("Uruchamiam Fetch (próba %d/3)", attempt+1)
+            resp = client.start()
+            if resp:
                 return FetchResponse(
-                    success=False,
-                    message="Po restarcie Fetch nie wstał prawidłowo.",
-                    source="status"
-                ).json()
+                    success=True,
+                    message=f"Fetch uruchomiony: {resp}",
+                    source="start"
+                ).dict()
+            logger.warning("Próba %d nieudana, ponawiam...", attempt+1)
 
-        # Uruchomienie /start
-        logger.info("Uruchamiam Fetch poprzez %s/start", FETCH_BASE_URL)
-        resp = requests.get(f"{FETCH_BASE_URL}/start", timeout=10)
-        resp.raise_for_status()
-
+        # 4. Po 3 nieudanych próbach
         return FetchResponse(
-            success=True,
-            message=f"Fetch uruchomiony. Odpowiedź: {resp.text}",
+            success=False,
+            message="❌ Nie udało się wywołać /start po 3 próbach",
             source="start"
-        ).json()
+        ).dict()
 
     except Exception as e:
-        # Raport błędu i log
         report_error("FetchTool", "start_fetch", e)
         logger.error("Błąd podczas uruchamiania Fetch: %s", e, exc_info=True)
         return FetchResponse(
             success=False,
             message=f"Błąd uruchamiania Fetch: {e}",
             source="exception"
-        ).json()
+        ).dict()
 
-# Definicja narzędzia LangChain
 start_fetch = StructuredTool.from_function(
     name="start_fetch",
-    description=(
-        "Zarządza uruchomieniem Fetch: sprawdza status, restartuje jeśli trzeba, "
-        "i wywołuje endpoint /start."
-    ),
+    description="Uruchamia Fetch: restart w razie potrzeby, czeka na cold-start, retryje /start, zwraca status.",
     func=_start_fetch,
-    args_schema=EmptyInput
+    args_schema=EmptyInput,
+    return_direct=True
 )

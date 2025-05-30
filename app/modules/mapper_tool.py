@@ -2,10 +2,10 @@ import os
 import json
 import logging
 from pathlib import Path
-from typing import Optional, Any, Dict
+from typing import Optional, Dict
 
 from pydantic import BaseModel, Field
-from langchain_core.tools import Tool
+from langchain.tools import Tool
 
 from app.utils.error_reporter import report_error
 
@@ -45,7 +45,7 @@ class MapperInput(BaseModel):
 
 def _load_id_map() -> Optional[Dict[str, str]]:
     """
-    Wczytuje JSON z mapowaniem ID -> nazwa województwa.
+    Wczytuje JSON z mapowaniem ID -> nazwa województwa, buforuje wynik.
     """
     global _mapa_id_cache
     if _mapa_id_cache is None:
@@ -65,7 +65,7 @@ def _load_id_map() -> Optional[Dict[str, str]]:
 def _mapuj_wojewodztwo(tool_input: MapperInput) -> str:
     """
     Mapuje ID lub kod pocztowy na nazwę województwa.
-    Zwraca 'NAZWA' lub '❌ komunikat'.
+    Zwraca czysty string nazwy lub komunikat z prefiksem '❌'.
     """
     try:
         mapa = _load_id_map()
@@ -112,5 +112,6 @@ WojewodztwoMapperTool = Tool.from_function(
     name="mapuj_wojewodztwo",
     description="Mapuje ID województwa lub kod pocztowy na nazwę województwa.",
     func=_mapuj_wojewodztwo,
-    args_schema=MapperInput
+    args_schema=MapperInput,
+    return_direct=True
 )
