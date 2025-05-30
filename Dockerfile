@@ -23,6 +23,7 @@ RUN apt-get update \
 # 📦 Upgrade pip and install Python dependencies from lock file
 RUN pip install --upgrade pip \
     && pip install --no-cache-dir --require-hashes -r requirements.lock.txt
+    && pip install --no-cache-dir python-multipart
 
 # 🗄️ Copy the rest of the application code
 COPY . .

@@ -15,7 +15,7 @@ class FetchAPIClient:
     """
 
     def __init__(self, base_url: Optional[str] = None, timeout: int = 10):
-        self.base_url = base_url or os.getenv("FETCH_BASE_URL", "https://fetch-2-0.onrender.com")
+        self.base_url = base_url or os.getenv("FETCH_URL", "https://fetch-2-0.onrender.com")
         self.timeout = timeout
         self.session = requests.Session()
 
