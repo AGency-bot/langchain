@@ -5,8 +5,8 @@ services:
     runtime: docker
     dockerContext: .
     dockerfilePath: Dockerfile
-    # Jeśli w Dockerfile jest prawidłowe CMD, to startCommand można usunąć.
-    startCommand: "uvicorn app.api.main:app --host 0.0.0.0 --port 8000"
+    # Render podaje port przez zmienną $PORT
+    startCommand: "uvicorn app.api.main:app --host 0.0.0.0 --port $PORT"
     envVars:
       - key: OPENAI_API_KEY
         sync: false
