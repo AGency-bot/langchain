@@ -11,7 +11,7 @@ from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from app.modules.fetch_tool import start_fetch, EmptyInput
-from app.modules.s3_tool import s3_tool
+from app.modules.s3_tool import s3_tool  # teraz Tool.from_function
 from app.modules.decision_tool import decide_if_order_is_good
 from app.modules.gmail_tool import gmail_tool
 from app.modules.whatsapp_tool import whatsapp_template_tool
@@ -50,7 +50,7 @@ prompt = ChatPromptTemplate.from_messages([
     MessagesPlaceholder(variable_name="agent_scratchpad"),
 ])
 
-# Inicjalizacja LLM (naprawiony parametr model_name)
+# Inicjalizacja LLM
 model_name = os.getenv("OPENAI_MODEL", "gpt-4")
 llm = ChatOpenAI(model_name=model_name, temperature=0.3)
 
@@ -75,11 +75,10 @@ def run_agent_cli():
     Tryb CLI do lokalnego testowania działania agenta.
     """
     try:
-        # 1) Pobranie snapshotu z S3 (jako dict)
-        raw = s3_tool.run(tool_input=EmptyInput())
+        # Teraz wywołujemy s3_tool.run(EmptyInput()) POZYSCYJNIE (nie jako keyword)
+        raw = s3_tool.run(EmptyInput())
         logger.info("Raw z S3Tool: %s", raw)
 
-        # 2) Parsowanie JSON (jeśli to string) lub użycie dict bezpośrednio
         if isinstance(raw, str):
             try:
                 snapshot = json.loads(raw)
@@ -89,7 +88,6 @@ def run_agent_cli():
         else:
             snapshot = raw
 
-        # 3) Upewnij się, że istnieje klucz "records"
         if "records" not in snapshot:
             logger.error("Brak klucza 'records' w snapshotcie: %s", snapshot)
             return
@@ -102,7 +100,6 @@ def run_agent_cli():
         )
         tracker = SnapshotTracker(kind=kind)
 
-        # 4) Filtracja nowych rekordów
         new_records = tracker.filter_new_records(records)
         if not new_records:
             logger.info("Brak nowych rekordów do przetworzenia.")
