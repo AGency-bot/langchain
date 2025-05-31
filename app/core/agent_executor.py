@@ -75,8 +75,8 @@ def run_agent_cli():
     Tryb CLI do lokalnego testowania działania agenta.
     """
     try:
-        # 1) Pobranie snapshotu z S3 (jako string lub dict)
-        raw = s3_tool.run(EmptyInput())
+        # 1) Pobranie snapshotu z S3 (jako dict)
+        raw = s3_tool.run(tool_input=EmptyInput())
         logger.info("Raw z S3Tool: %s", raw)
 
         # 2) Parsowanie JSON (jeśli to string) lub użycie dict bezpośrednio
