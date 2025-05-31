@@ -1,3 +1,5 @@
+# app/core/agent_executor.py
+
 import os
 import json
 import logging
@@ -5,8 +7,7 @@ from pathlib import Path
 
 from langchain.agents import AgentExecutor, create_openai_functions_agent
 from langchain.tools import Tool
-# Zmieniono import ChatOpenAI na nową implementację z pakietu langchain_openai
-from langchain_openai import ChatOpenAI
+from langchain_openai import ChatOpenAI  # używamy nowego pakietu langchain_openai
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from app.modules.fetch_tool import start_fetch, EmptyInput
@@ -49,7 +50,7 @@ prompt = ChatPromptTemplate.from_messages([
     MessagesPlaceholder(variable_name="agent_scratchpad"),
 ])
 
-# Inicjalizacja LLM przy użyciu nowej klasy ChatOpenAI z langchain_openai
+# Inicjalizacja LLM (naprawiony parametr model_name)
 model_name = os.getenv("OPENAI_MODEL", "gpt-4")
 llm = ChatOpenAI(model_name=model_name, temperature=0.3)
 
@@ -74,7 +75,8 @@ def run_agent_cli():
     Tryb CLI do lokalnego testowania działania agenta.
     """
     try:
-        raw = s3_tool.run(tool_input=EmptyInput())
+        # Poprawka: przekazujemy EMPTY_INPUT jako pozycjonalny argument, nie przez tool_input=...
+        raw = s3_tool.run(EmptyInput())
         snapshot = json.loads(raw) if isinstance(raw, str) else raw
 
         records = snapshot.get("records", [])
@@ -91,7 +93,6 @@ def run_agent_cli():
             return
 
         logger.info("Wykryto %d nowych rekordów. Uruchamiam agenta...", len(new_records))
-        # Użycie invoke z przekazaniem słownika, aby uniknąć problemów z Pydantic FieldInfo
         result = agent_executor.invoke({"input": "Rozpocznij analizę i obsługę zleceń"})
         tracker.update_cache(records)
         logger.info("=== WYNIK KOŃCOWY ===\n%s", result)
