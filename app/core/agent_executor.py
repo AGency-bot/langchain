@@ -7,7 +7,7 @@ from pathlib import Path
 
 from langchain.agents import AgentExecutor, create_openai_functions_agent
 from langchain.tools import Tool
-from langchain_openai import ChatOpenAI  # używamy nowego pakietu langchain_openai
+from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from app.modules.fetch_tool import start_fetch, EmptyInput
@@ -75,9 +75,24 @@ def run_agent_cli():
     Tryb CLI do lokalnego testowania działania agenta.
     """
     try:
-        # Poprawka: przekazujemy EMPTY_INPUT jako pozycjonalny argument, nie przez tool_input=...
+        # 1) Pobranie snapshotu z S3 (jako string lub dict)
         raw = s3_tool.run(EmptyInput())
-        snapshot = json.loads(raw) if isinstance(raw, str) else raw
+        logger.info("Raw z S3Tool: %s", raw)
+
+        # 2) Parsowanie JSON (jeśli to string) lub użycie dict bezpośrednio
+        if isinstance(raw, str):
+            try:
+                snapshot = json.loads(raw)
+            except json.JSONDecodeError as e:
+                logger.error("Niepoprawny JSON z S3: %s", e, exc_info=True)
+                return
+        else:
+            snapshot = raw
+
+        # 3) Upewnij się, że istnieje klucz "records"
+        if "records" not in snapshot:
+            logger.error("Brak klucza 'records' w snapshotcie: %s", snapshot)
+            return
 
         records = snapshot.get("records", [])
         kind = (
@@ -87,6 +102,7 @@ def run_agent_cli():
         )
         tracker = SnapshotTracker(kind=kind)
 
+        # 4) Filtracja nowych rekordów
         new_records = tracker.filter_new_records(records)
         if not new_records:
             logger.info("Brak nowych rekordów do przetworzenia.")
