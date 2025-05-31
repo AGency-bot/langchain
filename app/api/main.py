@@ -13,6 +13,7 @@ from fastapi import FastAPI, Form, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 from twilio.twiml.messaging_response import MessagingResponse
+from twilio.rest import Client
 
 from app.modules.gmail_tool import gmail_tool, GmailInput
 from app.utils.error_reporter import report_error
@@ -28,6 +29,16 @@ if not openai.api_key:
     logging.getLogger(__name__).warning("OPENAI_API_KEY nie jest ustawione w środowisku")
 
 _ai_client = AsyncOpenAI(api_key=openai.api_key)
+
+# ------------------------------------------------
+# Twilio Client configuration
+# ------------------------------------------------
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
+TWILIO_WHATSAPP_FROM = os.getenv("TWILIO_WHATSAPP_FROM")  # e.g., 'whatsapp:+14155238886'
+
+# Initialize Twilio Client
+twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
 # ------------------------------------------------
 # 1) Unified logging configuration
@@ -153,7 +164,7 @@ async def test_email():
     return JSONResponse(content={"status": "ok", "result": result})
 
 # ------------------------------------------------
-# 8) WhatsApp webhook
+# 8) WhatsApp webhook with direct Twilio Client usage
 # ------------------------------------------------
 @app.post("/whatsapp/webhook", response_class=PlainTextResponse)
 async def whatsapp_webhook(
@@ -163,10 +174,11 @@ async def whatsapp_webhook(
     """
     Odbiera wiadomości WhatsApp od Twilio i uruchamia agenta na komendzie "praca start".
     """
-    resp = MessagingResponse()
+    # Log incoming request for debugging
+    logger.info("ℹ️ Incoming WhatsApp webhook: Body=%s, From=%s", body, from_number)
+
     cmd = body.strip().lower()
     if cmd == "praca start":
-        # Uruchomienie agenta
         try:
             invocation = agent_executor.invoke({"input": "Rozpocznij analizę i obsługę zleceń"})
             if isinstance(invocation, dict):
@@ -175,13 +187,46 @@ async def whatsapp_webhook(
                 output = str(invocation)
         except Exception as e:
             output = f"❌ Błąd agenta: {e}"
-        resp.message(output)
+
+        # Wyślij odpowiedź przez Twilio Client
+        try:
+            message = twilio_client.messages.create(
+                from_=TWILIO_WHATSAPP_FROM,
+                body=output,
+                to=from_number  # np. 'whatsapp:+48...'
+            )
+            logger.info("✔️ Odpowiedź wysłana przez Twilio: sid=%s", message.sid)
+        except Exception as send_err:
+            logger.error("❌ Błąd wysyłania wiadomości Twilio: %s", send_err, exc_info=True)
+
+        # Zwróć pustą odpowiedź (Twilio i tak otrzyma 200 OK)
+        return PlainTextResponse("", status_code=200)
+
     elif cmd == "praca stop":
         agent_state.stop()
-        resp.message("⏸️ Agent zatrzymany.")
+        try:
+            message = twilio_client.messages.create(
+                from_=TWILIO_WHATSAPP_FROM,
+                body="⏸️ Agent zatrzymany.",
+                to=from_number
+            )
+            logger.info("✔️ Wiadomość 'Agent zatrzymany' wysłana: sid=%s", message.sid)
+        except Exception as send_err:
+            logger.error("❌ Błąd wysyłania wiadomości Twilio (stop): %s", send_err, exc_info=True)
+        return PlainTextResponse("", status_code=200)
+
     else:
-        resp.message("❓ Nie rozumiem. Dostępne: praca start, praca stop")
-    return PlainTextResponse(str(resp), media_type="application/xml")
+        # Nie rozumiem komendy – wyślij instrukcję
+        try:
+            message = twilio_client.messages.create(
+                from_=TWILIO_WHATSAPP_FROM,
+                body="❓ Nie rozumiem. Dostępne: praca start, praca stop",
+                to=from_number
+            )
+            logger.info("ℹ️ Wysłano instrukcję: sid=%s", message.sid)
+        except Exception as send_err:
+            logger.error("❌ Błąd wysyłania instrukcji Twilio: %s", send_err, exc_info=True)
+        return PlainTextResponse("", status_code=200)
 
 # ------------------------------------------------
 # 9) Uvicorn entrypoint for local/dev
