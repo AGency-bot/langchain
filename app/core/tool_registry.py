@@ -65,7 +65,7 @@ fetch_tool = Tool.from_function(
 
 sanitizer_tool = Tool.from_function(
     name="snapshot_sanitizer_tool",
-    func=sanityzuj_snapshot,
+    func=_sanityzuj_snapshot,
     description="Sanityzuje snapshot – usuwa błędne rekordy lub zamienia puste dane.",
     return_direct=True,
 )
