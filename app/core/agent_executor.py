@@ -11,7 +11,7 @@ from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from app.core.snapshot_tracker import SnapshotTracker
-from app.tools.tool_registry import get_all_tools
+from app.modules.tool_registry import get_all_tools
 from app.modules.s3_tool import s3_wrapper  # funkcja, nie Tool!
 
 # --- Logging ---
