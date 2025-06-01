@@ -46,13 +46,15 @@ restart_fetch_tool = Tool.from_function(
     name="restart_fetch",
     func=restart_fetch,
     description="Restartuje usługę Fetch (stop -> start -> status z retry).",
+    args_schema=EmptyInput,
     return_direct=True,
 )
 
-fetch_status_tool = Tool.from_function(
+fetch_status_tool = StructuredTool.from_function(
     name="check_fetch_status",
     func=check_fetch_status,
     description="Sprawdza status działania Fetch przez GET /status",
+    args_schema=EmptyInput,
     return_direct=True,
 )
 
