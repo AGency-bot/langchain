@@ -12,7 +12,7 @@ from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from app.core.snapshot_tracker import SnapshotTracker
 from app.core.tool_registry import get_all_tools
-from app.modules.s3_tool import s3_wrapper  # funkcja, nie Tool!
+from app.modules.s3_tool import fetch_latest_snapshot
 
 # --- Logging ---
 logging.basicConfig(level=logging.INFO)
@@ -66,7 +66,7 @@ def run_agent_cli() -> None:
     """
     try:
         logger.info("📦 Pobieram snapshot danych z S3...")
-        raw = s3_wrapper({})
+        raw = fetch_latest_snapshot({})
 
         logger.info("Raw z S3Tool: %s", raw)
         snapshot: dict[str, Any] = json.loads(raw) if isinstance(raw, str) else raw
