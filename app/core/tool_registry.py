@@ -11,7 +11,7 @@ from app.modules.fetch_restart_tool import restart_fetch
 from app.modules.fetch_status_tool import check_fetch_status
 from app.modules.fetch_tool import resilient_fetch
 from app.modules.decision_tool import decide_if_order_is_good
-from app.modules.fetch_sanitizer_tool import _sanityzuj_snapshot
+from app.modules.snapshot_sanitizer_tool import _sanityzuj_snapshot
 
 # ✅ Narzędzia LangChain Tools
 
@@ -64,7 +64,7 @@ fetch_tool = Tool.from_function(
 )
 
 sanitizer_tool = Tool.from_function(
-    name="fetch_sanitizer_tool",
+    name="snapshot_sanitizer_tool",
     func=sanityzuj_snapshot,
     description="Sanityzuje snapshot – usuwa błędne rekordy lub zamienia puste dane.",
     return_direct=True,
