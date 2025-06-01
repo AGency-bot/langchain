@@ -54,11 +54,11 @@ def send_gmail_email(data: Dict[str, str]) -> str:
         report_error("gmail_tool", "send_gmail_email", e)
         logger.error("❌ Błąd wysyłania e-maila: %s", e, exc_info=True)
         return f"❌ Błąd wysyłania e-maila: {e}"
-
-# Rejestracja jako Tool
+    
 gmail_tool = Tool.from_function(
     name="gmail_tool",
-    description="Wysyła e-mail na podstawie pola 'subject' i 'body'. Wymaga skonfigurowanego GMAIL_USER.",
+    description="Wysyła e-mail z podanym tematem i treścią. Wymaga skonfigurowanego GMAIL_USER.",
     func=send_gmail_email,
+    args_schema=GmailInput, 
     return_direct=True
 )
