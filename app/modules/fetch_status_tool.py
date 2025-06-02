@@ -14,7 +14,7 @@ class EmptyInput(BaseModel):
     pass
 
 
-@tool(name="check_fetch_status", args_schema=EmptyInput, return_direct=True)
+@tool(args_schema=EmptyInput, return_direct=True)
 def check_fetch_status(_: EmptyInput) -> str:
     """
     Sprawdza, czy serwis Fetch jest aktywny, używając endpointu /status.

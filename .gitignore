@@ -23,9 +23,6 @@ venv/
 env/
 ENV/
 
-# Pliki danych lokalnych (jeśli nie w repozytorium)
-data/*.xlsx
-data/*.json
 
 # Build i dist
 build/

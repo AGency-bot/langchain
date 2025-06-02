@@ -19,7 +19,7 @@ class EmptyInput(BaseModel):
     pass
 
 
-@tool(name="s3_tool", description="Zwraca najnowszy snapshot danych z AWS S3 (format dict).", args_schema=EmptyInput, return_direct=True)
+@tool(description="Zwraca najnowszy snapshot danych z AWS S3 (format dict).", args_schema=EmptyInput, return_direct=True)
 def fetch_latest_snapshot(_: EmptyInput) -> Dict[str, Any]:
     """
     Pobiera najnowszy snapshot z S3 i zwraca jako dict.

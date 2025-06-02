@@ -16,7 +16,7 @@ class EmptyInput(BaseModel):
     pass
 
 
-@tool(name="restart_fetch", args_schema=EmptyInput, return_direct=True)
+@tool(args_schema=EmptyInput, return_direct=True)
 def restart_fetch(_: EmptyInput) -> str:
     """
     Restartuje serwis Fetch, używając endpointu /restart.

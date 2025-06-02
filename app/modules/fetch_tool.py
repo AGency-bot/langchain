@@ -16,7 +16,7 @@ class EmptyInput(BaseModel):
     pass
 
 
-@tool(name="resilient_fetch", args_schema=EmptyInput, return_direct=True)
+@tool(args_schema=EmptyInput, return_direct=True)
 def resilient_fetch(_: EmptyInput) -> str:
     """
     Uruchamia Fetch, a jeśli się nie powiedzie, restartuje go i sprawdza status.
