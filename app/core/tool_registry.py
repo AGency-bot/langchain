@@ -56,7 +56,7 @@ restart_fetch_tool = Tool.from_function(
     return_direct=True,
 )
 
-fetch_status_tool = StructuredTool.from_function(
+fetch_status_tool = Tool.from_function(
     name="check_fetch_status",
     func=check_fetch_status,
     description="Sprawdza status działania Fetch przez GET /status",
