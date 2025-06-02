@@ -1,6 +1,8 @@
 # app/core/tool_registry.py
 
 from langchain.tools import Tool
+from pydantic import BaseModel
+
 
 # ✅ Poprawione importy
 from app.modules.s3_tool import fetch_latest_snapshot
@@ -12,6 +14,10 @@ from app.modules.fetch_status_tool import check_fetch_status
 from app.modules.fetch_tool import resilient_fetch
 from app.modules.decision_tool import decide_if_order_is_good
 from app.modules.snapshot_sanitizer_tool import _sanityzuj_snapshot
+
+class EmptyInput(BaseModel):
+    """Pusty schemat wejściowy dla narzędzi bez argumentów."""
+    pass
 
 # ✅ Narzędzia LangChain Tools
 
