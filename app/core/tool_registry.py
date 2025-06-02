@@ -1,6 +1,6 @@
 # app/core/tool_registry.py
 
-from langchain.tools import Tool
+from langchain.tools import Tool, StructuredTool
 from pydantic import BaseModel
 
 
