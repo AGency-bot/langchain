@@ -15,12 +15,12 @@ logger = logging.getLogger(__name__)
 
 
 class EmptyInput(BaseModel):
-    """Model wejściowy – pusty, ale zgodny z LangChain."""
+    """Model wejściowy – pusty, ale wymagany przez LangChain."""
     pass
 
 
-@tool(description="Zwraca najnowszy snapshot danych z AWS S3 (format dict).", args_schema=EmptyInput, return_direct=True)
-def fetch_latest_snapshot(_):
+@tool(args_schema=EmptyInput, return_direct=True)
+def fetch_latest_snapshot(_: EmptyInput) -> Dict[str, Any]:
     """
     Pobiera najnowszy snapshot z S3 i zwraca jako dict.
     Jeśli wystąpi błąd – zwraca {'records': [], 'error': '...'}
