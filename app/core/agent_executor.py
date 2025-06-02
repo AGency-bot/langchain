@@ -66,7 +66,7 @@ def run_agent_cli() -> None:
     """
     try:
         logger.info("📦 Pobieram snapshot danych z S3...")
-        raw = fetch_latest_snapshot(EmptyInput())
+        raw = fetch_latest_snapshot.invoke({})
 
         logger.info("Raw z S3Tool: %s", raw)
         snapshot: dict[str, Any] = json.loads(raw) if isinstance(raw, str) else raw
