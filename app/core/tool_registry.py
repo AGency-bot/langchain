@@ -3,11 +3,10 @@
 from langchain.tools import Tool, StructuredTool
 from pydantic import BaseModel
 
-
 # ✅ Poprawione importy
 from app.modules.s3_tool import fetch_latest_snapshot
 from app.modules.gmail_tool import send_gmail_email
-from app.modules.mapper_tool import resolve_wojewodztwo, _load_id_map
+from app.modules.mapper_tool import resolve_wojewodztwo
 from app.modules.whatsapp_tool import _send_whatsapp
 from app.modules.fetch_restart_tool import restart_fetch
 from app.modules.fetch_status_tool import check_fetch_status
@@ -15,8 +14,8 @@ from app.modules.fetch_tool import resilient_fetch
 from app.modules.decision_tool import decide_if_order_is_good
 from app.modules.snapshot_sanitizer_tool import _sanityzuj_snapshot
 
+# ✅ Pusty model wejściowy wymagany przez StructuredTool
 class EmptyInput(BaseModel):
-    """Pusty schemat wejściowy dla narzędzi bez argumentów."""
     pass
 
 # ✅ Narzędzia LangChain Tools
@@ -48,17 +47,17 @@ whatsapp_template_tool = Tool.from_function(
     return_direct=True,
 )
 
-restart_fetch_tool = Tool.from_function(
-    name="restart_fetch",
+restart_fetch_tool = StructuredTool.from_function(
     func=restart_fetch,
+    name="restart_fetch",
     description="Restartuje usługę Fetch (stop -> start -> status z retry).",
     args_schema=EmptyInput,
     return_direct=True,
 )
 
-fetch_status_tool = Tool.from_function(
-    name="check_fetch_status",
+fetch_status_tool = StructuredTool.from_function(
     func=check_fetch_status,
+    name="check_fetch_status",
     description="Sprawdza status działania Fetch przez GET /status",
     args_schema=EmptyInput,
     return_direct=True,
