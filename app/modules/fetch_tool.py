@@ -1,13 +1,23 @@
-# app/modules/resilient_fetch_tool.py
+# app/modules/fetch_tool.py
 
 import os
 import requests
 import logging
+from pydantic import BaseModel
+from langchain.tools import tool
+
 from app.utils.error_reporter import report_error
 
 logger = logging.getLogger(__name__)
 
-def resilient_fetch() -> str:
+
+class EmptyInput(BaseModel):
+    """Model wejściowy – pusty, ale wymagany przez LangChain."""
+    pass
+
+
+@tool(name="resilient_fetch", args_schema=EmptyInput, return_direct=True)
+def resilient_fetch(_: EmptyInput) -> str:
     """
     Uruchamia Fetch, a jeśli się nie powiedzie, restartuje go i sprawdza status.
     """

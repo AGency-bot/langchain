@@ -1,42 +1,34 @@
 # app/modules/fetch_status_tool.py
 
+import os
+import requests
 import logging
-from typing import Optional
 from pydantic import BaseModel
-from langchain.tools import StructuredTool
-
-from app.utils.fetch_api_client import FetchAPIClient
-from app.utils.error_reporter import report_error
+from langchain.tools import tool
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
-class FetchStatusInput(BaseModel):
-    """Brak argumentów wejściowych."""
+
+class EmptyInput(BaseModel):
+    """Pusty model wejściowy – wymagany przez LangChain."""
     pass
 
-def _check_fetch_status(tool_input: Optional[FetchStatusInput] = None) -> str:
-    """
-    Sprawdza, czy serwis fetch_2.0 działa, korzystając z FetchAPIClient.
-    Zwraca "✅ Fetch działa" lub komunikat błędu/nieaktywności.
-    """
-    try:
-        client = FetchAPIClient()
-        data = client.get_status()
-        logger.info("Otrzymano odpowiedź statusu: %s", data)
-        running = data.get("running", data.get("status"))
-        if running is True:
-            return "✅ Fetch działa"
-        return f"❌ Fetch nie działa (od serwisu: {data})"
-    except Exception as e:
-        report_error("FetchStatusTool", "check_fetch_status", e)
-        logger.error("Błąd podczas sprawdzania statusu Fetch: %s", e, exc_info=True)
-        return f"❌ Błąd podczas sprawdzania statusu Fetch: {e}"
 
-check_fetch_status = StructuredTool.from_function(
-    name="check_fetch_status",
-    description="Sprawdza pole `running` (lub `status` dla kompatybilności) w odpowiedzi Fetch na `/status`.",
-    func=_check_fetch_status,
-    args_schema=FetchStatusInput,
-    return_direct=True
-)
+@tool(name="check_fetch_status", args_schema=EmptyInput, return_direct=True)
+def check_fetch_status(_: EmptyInput) -> str:
+    """
+    Sprawdza, czy serwis Fetch jest aktywny, używając endpointu /status.
+    Zwraca komunikat tekstowy.
+    """
+    base_url = os.getenv("FETCH_BASE_URL", "https://fetch-2-0.onrender.com")
+    try:
+        response = requests.get(f"{base_url}/status", timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        if data.get("running") or data.get("status") is True:
+            return "✅ Fetch działa poprawnie."
+        else:
+            return "❌ Fetch nie działa (odpowiedź serwisu wskazuje na brak działania)."
+    except Exception as e:
+        logger.error("Błąd sprawdzania statusu Fetch: %s", e, exc_info=True)
+        return f"❌ Błąd sprawdzania statusu Fetch: {e}"
