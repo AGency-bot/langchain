@@ -61,7 +61,7 @@ def _decide_if_order_is_good(tool_input: DecisionInput) -> str:
         excel_path = Path(
             os.getenv(
                 "PREFERENCES_XLSX_PATH",
-                "data/tablica binarna segment + wojewodztwo.xlsx"
+                "data/tablica_binarna.xlsx"
             )
         )
         if not excel_path.is_file():

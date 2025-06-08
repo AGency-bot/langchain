@@ -33,6 +33,6 @@ services:
       - key: FETCH_BASE_URL
         value: "https://fetch-2-0.onrender.com"
       - key: PREFERENCES_XLSX_PATH
-        value: "./data/tablica.xlsx"
+        value: "./data/tablica_binarna.xlsx"
       - key: WOJEWODZTWA_MAPPING_PATH
         value: "./data/wojewodztwa_mapping.json"
